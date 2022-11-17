@@ -15,6 +15,7 @@ import webbrowser
 """
 The user data constant is used to setup and download programs on the instances
 They are passed as arguments in the create instance step
+https://fedingo.com/how-to-automate-mysql_secure_installation-script/
 """
 
 userdata_SA="""#!/bin/bash
