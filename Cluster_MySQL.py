@@ -17,18 +17,18 @@ import webbrowser
 userdata_primary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
-wget https://dev.mysql.com/get/Downloads/MySQL-Cluster-8.0/mysql-cluster-community-management-server_8.0.31-1ubuntu20.04_amd64.deb
-sudo dpkg -i mysql-cluster-community-management-server_8.0.31-1ubuntu20.04_amd64.deb
+wget https://downloads.mysql.com/archives/get/p/14/file/mysql-cluster-community-management-server_7.6.23-1ubuntu18.04_amd64.deb
+sudo dpkg -i mysql-cluster-community-management-server_7.6.23-1ubuntu18.04_amd64.deb
 sudo mkdir /var/lib/mysql-cluster
 """
 
 userdata_secondary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
-wget https://dev.mysql.com/get/Downloads/MySQL-Cluster-8.0/mysql-cluster-community-data-node_8.0.31-1ubuntu20.04_amd64.deb
+wget https://downloads.mysql.com/archives/get/p/14/file/mysql-cluster-community-data-node_7.6.23-1ubuntu18.04_amd64.deb
+sudo apt update
 sudo apt install libclass-methodmaker-perl
-sudo dpkg -i mysql-cluster-community-data-node_8.0.31-1ubuntu20.04_amd64.deb
-
+sudo dpkg -i mysql-cluster-community-data-node_7.6.23-1ubuntu18.04_amd64.deb
 """
 
 def createSecurityGroup(ec2_client):
@@ -61,19 +61,19 @@ def createSecurityGroup(ec2_client):
     try:
         new_group = ec2_client.create_security_group(
             Description="SSH and HTTP access",
-            GroupName="MySQL",
+            GroupName="MySQLCluster",
             VpcId=vpc_id
         )
 
         # Wait for the security group to exist!
         new_group_waiter = ec2_client.get_waiter('security_group_exists')
-        new_group_waiter.wait(GroupNames=["MySQL"])
+        new_group_waiter.wait(GroupNames=["MySQLCluster"])
 
         group_id = new_group["GroupId"]
 
         #change rule to allow more port for the chldren
         rule_creation = ec2_client.authorize_security_group_ingress(
-            GroupName="MySQL",
+            GroupName="MySQLCluster",
             GroupId=group_id,
             IpPermissions=[{
                 'FromPort': 22,
@@ -82,8 +82,8 @@ def createSecurityGroup(ec2_client):
                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
             },
             {
-                'FromPort': 80,
-                'ToPort': 80,
+                'FromPort': 1186,
+                'ToPort': 1186,
                 'IpProtocol': 'tcp',
                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
             }]
@@ -97,7 +97,7 @@ def createSecurityGroup(ec2_client):
         #print("sec groups", groups)
         sec_groups = groups["SecurityGroups"]
         for group in sec_groups:
-            if (group['GroupName'] == 'MySQL'):
+            if (group['GroupName'] == 'MySQLCluster'):
                 SECURITY_GROUP = [group['GroupId']]
 
         return SECURITY_GROUP, vpc_id
@@ -155,7 +155,7 @@ def createInstance(ec2, INSTANCE_TYPE, COUNT, SECURITY_GROUP, SUBNET_ID, userdat
         """
     # Don't change these
     KEY_NAME = "vockey"
-    INSTANCE_IMAGE = "ami-08d4ac5b634553e16"
+    INSTANCE_IMAGE = "ami-0ee23bfc74a881de5"
 
     return ec2.create_instances(
         ImageId=INSTANCE_IMAGE,
@@ -216,14 +216,15 @@ def createInstances(ec2_client, ec2, SECURITY_GROUP, availabilityZones):
         instance_ids.append(instance.id)
         primary_instance_id.append({'Id': instance.id,
                                     'Ip': instance.public_ip_address,
-                                    'pIp': instance.private_ip_address})
+                                    'privateIp': instance.private_ip_address})
 
     for instance in instances_t2_cluster:
         instance.wait_until_running()
         instance.reload()
         instance_ids.append(instance.id)
         cluster_instance_ids.append({'Id': instance.id,
-                                     'Ip': instance.public_ip_address})
+                                     'Ip': instance.public_ip_address,
+                                     'privateIp': instance.private_ip_address})
     """
     for instance in instances_t2_proxy:
         instance_ids.append(instance.id)
@@ -265,6 +266,8 @@ def main():
     ins_ids, primary_instance_id, cluster_instance_ids, proxy_instance_id = createInstances(ec2_client, ec2, SECURITY_GROUP, availabilityZones)
     print("Instance ids: \n", str(ins_ids), "\n")
     print("Instance id primary: \n", str(primary_instance_id), "\n")
-    print("Instance ids cluster: \n", str(cluster_instance_ids), "\n")
+    print("Instance ids cluster:")
+    for ins in cluster_instance_ids:
+        print(ins)
     #print("Instance id proxy: \n", str(proxy_instance_id), "\n")
 main()

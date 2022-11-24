@@ -35,7 +35,7 @@ sudo mysql -e "SOURCE /tmp/sakila-db/sakila-data.sql;"
 sudo mysql -e "UPDATE mysql.user SET Password=PASSWORD('admin') WHERE User='root';"
 sudo mysql -e "DELETE FROM mysql.user WHERE User='';"
 sudo mysql -e "DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');"
-sudo mysql -e "DROP DATABASE test"
+sudo mysql -e "DROP DATABASE test;"
 sudo mysql -e "FLUSH PRIVILEGES;"
 sudo mysql -e "CREATE USER 'victor'@'localhost' IDENTIFIED BY 'password';"
 sudo mysql -e "GRANT ALL PRIVILEGES on sakila.* TO 'victor'@'localhost';"
@@ -291,6 +291,19 @@ def send_command(client, command):
         print("error occured in sending command")
 
 def getSysbechfile(client, accesKey, ip):
+    """
+        the function connects to the instance and sends a command to retrieve the output file created by sysbench
+
+        Parameters
+        ----------
+        client : client
+            the paramiko client required to connect to the intance usin ssh
+        accesKey : str
+            The RSA key to be able to connect to instance
+        ip: str
+            ip adress of the instance we wish to connect to
+
+        """
     try:
         client.connect(hostname=ip, username="ubuntu", pkey=accesKey)
     except:
