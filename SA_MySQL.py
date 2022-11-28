@@ -4,13 +4,7 @@
 import boto3
 import paramiko
 from pathlib import Path
-import json
 import time
-import requests
-from datetime import datetime, date, timedelta
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import webbrowser
 
 """
 The user data constant is used to setup and download programs on the instances

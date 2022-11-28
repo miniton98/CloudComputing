@@ -2,19 +2,12 @@
 # MAKE SURE YOU UPDATED YOUR .AWS/credentials file
 # MAKE SURE boto3, matplotlib, requests and tornado are all installed using pip
 import boto3
-import json
-import time
-import requests
-from datetime import datetime, date, timedelta
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-import paramiko
 from pathlib import Path
-import webbrowser
 
 # This makes the plots made by the script open in a webbrowser
 """https://cloudinfrastructureservices.co.uk/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-20-04/"""
 """https://www.digitalocean.com/community/tutorials/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-18-04"""
+
 userdata_primary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
@@ -251,84 +244,12 @@ def createInstances(ec2_client, ec2, SECURITY_GROUP, availabilityZones):
 
     return instance_ids, primary_instance_id, cluster_instance_ids, proxy_instance_id
 
-def getParamikoClient():
-    """
-        Retrievs the users PEM file and creates a paramiko client required to ssh into the instances
-
-        Returns
-        -------
-        client
-            the paramiko client
-        str
-            the access key from the PEM file
-
-        """
-    path = str(get_project_root()).replace('\\', '/')
-    print("path", path)
-    accesKey = paramiko.RSAKey.from_private_key_file(path + "/labsuser.pem")
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    return client, accesKey
-
-def send_command(client, command):
-    """
-        function that sends command to an instance using paramiko
-        print possible errors and return values
-
-        Parameters
-        ----------
-        client : client
-            the paramiko client required to connect to the intance usin ssh
-        command : str
-            The desired commands are sent to the instance
-
-        Returns
-        -------
-        str
-            returns the return value of commands
-
-        """
-    try:
-        stdin, stdout, stderr = client.exec_command(command)
-        # the read() function reads the output in bit form
-        print("stderr.read():", stderr.read())
-        # converts the bit string to str
-        output = stdout.read().decode('ascii')
-        print("output", output)
-        return output
-    except:
-        print("error occured in sending command")
-
-def getSysbechfile(client, accesKey, ip):
-    """
-        the function connects to the instance and sends a command to retrieve the output file created by sysbench
-
-        Parameters
-        ----------
-        client : client
-            the paramiko client required to connect to the intance usin ssh
-        accesKey : str
-            The RSA key to be able to connect to instance
-        ip: str
-            ip adress of the instance we wish to connect to
-
-        """
-    try:
-        client.connect(hostname=ip, username="ubuntu", pkey=accesKey)
-    except:
-        print("could not connect to client")
-
-    res = send_command(client, "cat Cluster.txt")
 
 def main():
 
     """-------------------Get necesarry clients from boto3----------------------"""
     ec2_client = boto3.client("ec2")
     ec2 = boto3.resource('ec2')
-
-    """------------Create Paramiko Client------------------------------"""
-    paramiko_client, accesKey = getParamikoClient()
 
     """-------------------Create security group----------------------"""
     SECURITY_GROUP, vpc_id = createSecurityGroup(ec2_client)
@@ -348,8 +269,5 @@ def main():
     for ins in cluster_instance_ids:
         print(ins)
     #print("Instance id proxy: \n", str(proxy_instance_id), "\n")
-
-    print("Waiting for setup")
-    time.sleep(100)
 
 main()
