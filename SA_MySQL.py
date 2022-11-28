@@ -43,8 +43,8 @@ sudo mysql -e "GRANT ALL PRIVILEGES on sakila.* TO 'victor'@'localhost';"
 # Sysbench installation and benchmarking
 yes | sudo apt-get install sysbench
 # Prepare
-sysbench --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=200 /usr/share/sysbench/oltp_read_write.lua prepare
-sysbench --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=200 --threads=6 --time=60 /usr/share/sysbench/oltp_read_write.lua run > SA.txt
+sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=100000  prepare
+sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=100000 --threads=6 --time=60  run > SA.txt
 """
 
 # allows us to geth the path for the pem file
@@ -103,12 +103,6 @@ def createSecurityGroup(ec2_client):
                 'ToPort': 22,
                 'IpProtocol': 'tcp',
                 'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
-            },
-            {
-                'FromPort': 80,
-                'ToPort': 80,
-                'IpProtocol': 'tcp',
-                'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
             }]
         )
 
@@ -122,7 +116,6 @@ def createSecurityGroup(ec2_client):
         for group in sec_groups:
             if (group['GroupName'] == 'MySQL'):
                 SECURITY_GROUP = [group['GroupId']]
-
         return SECURITY_GROUP, vpc_id
 
 def getAvailabilityZones(ec2_client):
@@ -336,7 +329,7 @@ def main():
     print("Instance id SA: \n", str(SA_instance_id), "\n")
 
     print("Waiting for setup")
-    time.sleep(300)
+    time.sleep(360)
 
     """------------------Get Sysbech File----------------------------"""
     getSysbechfile(paramiko_client, accesKey, SA_instance_id[0]['Ip'])
