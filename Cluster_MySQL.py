@@ -11,10 +11,24 @@ from pathlib import Path
 userdata_primary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
+yes | sudo apt-get upgrade
 wget https://downloads.mysql.com/archives/get/p/14/file/mysql-cluster-community-management-server_7.6.23-1ubuntu18.04_amd64.deb
 sudo dpkg -i mysql-cluster-community-management-server_7.6.23-1ubuntu18.04_amd64.deb
 sudo mkdir /var/lib/mysql-cluster
 
+wget https://downloads.mysql.com/archives/get/p/14/file/mysql-cluster_7.6.23-1ubuntu18.04_amd64.deb-bundle.tar
+sudo mkdir install
+sudo tar -xvf mysql-cluster_7.6.23-1ubuntu18.04_amd64.deb-bundle.tar -C install/
+
+# Sakila download
+#some issues with unzip download
+sudo wget http://downloads.mysql.com/docs/sakila-db.zip
+sudo apt update
+yes | sudo apt --fix-broken install
+sudo apt install unzip
+sudo unzip sakila-db.zip -d "/tmp/"
+
+yes | sudo apt-get install sysbench
 """
 
 userdata_secondary="""#!/bin/bash

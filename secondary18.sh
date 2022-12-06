@@ -4,7 +4,7 @@ sudo chmod ugo+rwx /etc
 sudo cat <<EOF >/etc/my.cnf
 [mysql_cluster]
 # Options for NDB Cluster processes:
-ndb-connectstring=172.31.11.201 # location of cluster manager
+ndb-connectstring=172.31.9.144 # location of cluster manager
 EOF
 sudo mkdir -p /usr/local/mysql/data
 sudo ndbd
