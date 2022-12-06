@@ -1,19 +1,22 @@
-# setup mysql
-
+# install and setup mysql
+# perform benchmarking using sysbench
 cd install
 sudo apt update
 yes | sudo apt install libaio1 libmecab2
-# asks for password
+# asks for password, insert desired password
 yes | sudo dpkg -i *.deb
+
 # must be run manually, for some reason
+#insert private IP of manager node
 sudo nano /etc/mysql/my.cnf
+
 [mysqld]
 # Options for mysqld process:
 ndbcluster                      # run NDB storage engine
 
 [mysql_cluster]
 # Options for NDB Cluster processes:
-ndb-connectstring=172.31.9.144  # location of management server
+ndb-connectstring=172.31.14.186  # location of management server
 
 # instructions on how to save written data using nano commands
 # CtRL + O
@@ -31,8 +34,8 @@ show
 # exit to close shell
 
 # run these in the mysql bash
-#checking from mysql shell that it is correctly set up
-# MySQL installation
+# checking from mysql shell that it is correctly set up
+# MySQL set up
 mysql -u root -p
 SHOW ENGINE NDB STATUS \G
 SOURCE /tmp/sakila-db/sakila-schema.sql;
@@ -44,11 +47,7 @@ CREATE USER 'victor'@'localhost' IDENTIFIED BY 'password';
 GRANT ALL PRIVILEGES on sakila.* TO 'victor'@'localhost';
 # exit to close shell
 
-#this based on which user etc
-# Sysbench installation and benchmarking
-#yes | sudo apt --fix-broken install
-#yes | sudo apt-get install sysbench
-# Prepare
+# Sysbench benchmarking
 sudo chmod ugo+rwx ~
 sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=100000  prepare
 sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=100000 --threads=6 --time=60  run > Cluster.txt
