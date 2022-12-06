@@ -1,13 +1,15 @@
 # Keys are defined in configuration file
 # MAKE SURE YOU UPDATED YOUR .AWS/credentials file
-# MAKE SURE boto3, matplotlib, requests and tornado are all installed using pip
+# MAKE SURE boto3 is installed using pip
 import boto3
-from pathlib import Path
 
-# This makes the plots made by the script open in a webbrowser
-"""https://cloudinfrastructureservices.co.uk/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-20-04/"""
-"""https://www.digitalocean.com/community/tutorials/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-18-04"""
+"""
+Used this guide to setup the MySQL cluster
+The commands are partially in the userdata, otherwise in the shell scripts
+https://www.digitalocean.com/community/tutorials/how-to-create-a-multi-node-mysql-cluster-on-ubuntu-18-04
+"""
 
+# setup file for the primary MySQL manager node, installs programs at instance setup
 userdata_primary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
@@ -31,6 +33,7 @@ sudo unzip sakila-db.zip -d "/tmp/"
 yes | sudo apt-get install sysbench
 """
 
+# set up data for secondary nodes
 userdata_secondary="""#!/bin/bash
 cd /home/ubuntu
 sudo apt-get update
@@ -39,13 +42,6 @@ sudo apt update
 sudo apt install libclass-methodmaker-perl
 sudo dpkg -i mysql-cluster-community-data-node_7.6.23-1ubuntu18.04_amd64.deb
 """
-
-def get_project_root() -> Path:
-    """
-    Function for getting the path where the program is executed
-    @ return: returns the parent path of the path were the program is executed
-    """
-    return Path(__file__).parent
 
 def createSecurityGroup(ec2_client):
     """
@@ -87,7 +83,7 @@ def createSecurityGroup(ec2_client):
 
         group_id = new_group["GroupId"]
 
-        #change rule to allow more port for the chldren
+        #The last rule opens all ports of the instances, the clusters wont connect to API if it is more limited
         rule_creation = ec2_client.authorize_security_group_ingress(
             GroupName="MySQLCluster",
             GroupId=group_id,
@@ -116,7 +112,6 @@ def createSecurityGroup(ec2_client):
 
     except:
         print("Group already exists fetching it")
-        #print("sec groups", groups)
         sec_groups = groups["SecurityGroups"]
         for group in sec_groups:
             if (group['GroupName'] == 'MySQLCluster'):
@@ -230,8 +225,6 @@ def createInstances(ec2_client, ec2, SECURITY_GROUP, availabilityZones):
     cluster_instance_ids = []
     proxy_instance_id = []
 
-
-
     for instance in instances_t2_primary:
         instance.wait_until_running()
         instance.reload()
@@ -260,6 +253,10 @@ def createInstances(ec2_client, ec2, SECURITY_GROUP, availabilityZones):
 
 
 def main():
+    """
+    Main script fro creating AWS EC2 instances using python SDK boto3
+    Rest of the set up is done manually, by ssh to instances and run shell scripts
+    """
 
     """-------------------Get necesarry clients from boto3----------------------"""
     ec2_client = boto3.client("ec2")
