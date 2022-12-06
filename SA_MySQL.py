@@ -1,6 +1,7 @@
 # Keys are defined in configuration file
 # MAKE SURE YOU UPDATED YOUR .AWS/credentials file
-# MAKE SURE boto3, matplotlib, requests and tornado are all installed using pip
+# MAKE SURE boto3 and paramiko is installed using pip
+# Add labsuser.PEM file to the working directory
 import boto3
 import paramiko
 from pathlib import Path
@@ -41,7 +42,7 @@ sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=
 sysbench oltp_read_write --db-driver=mysql --mysql-user=victor --mysql_password=password --mysql-db=sakila --tables=6 --table-size=100000 --threads=6 --time=60  run > SA.txt
 """
 
-# allows us to geth the path for the pem file
+# allows us to get the path for the pem file
 def get_project_root() -> Path:
     """
     Function for getting the path where the program is executed
@@ -105,7 +106,6 @@ def createSecurityGroup(ec2_client):
 
     except:
         print("Group already exists fetching it")
-        #print("sec groups", groups)
         sec_groups = groups["SecurityGroups"]
         for group in sec_groups:
             if (group['GroupName'] == 'MySQL'):
@@ -264,7 +264,6 @@ def send_command(client, command):
         -------
         str
             returns the return value of commands
-
         """
     try:
         stdin, stdout, stderr = client.exec_command(command)
@@ -299,6 +298,11 @@ def getSysbechfile(client, accesKey, ip):
     res = send_command(client, "cat SA.txt")
 
 def main():
+    """
+    Main file that automatically launches AWS EC2 instance
+    installs MySQL on the instance
+    Benchmarks the performance using sakila DB and sysbench
+    """
 
     """-------------------Get necesarry clients from boto3----------------------"""
     ec2_client = boto3.client("ec2")
